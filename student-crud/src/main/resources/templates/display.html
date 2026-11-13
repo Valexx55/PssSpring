@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>All Students</title></head>
+<body>
+<h2>All Students</h2>
+<table border="1">
+    <tr>
+        <th>Roll No</th><th>Name</th><th>Semester</th><th>CGPA</th><th>Phone</th>
+    </tr>
+    <tr th:each="s : ${students}">
+        <td th:text="${s.rollNo}"></td>
+        <td th:text="${s.name}"></td>
+        <td th:text="${s.semester}"></td>
+        <td th:text="${s.cgpa}"></td>
+        <td th:text="${s.phoneNumber}"></td>
+    </tr>
+</table>
+<a href="/">Back</a>
+</body>
+</html>

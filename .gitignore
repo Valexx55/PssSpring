@@ -1,0 +1,59 @@
+
+# ==========================================
+# SPRING TOOL SUITE / ECLIPSE
+# ==========================================
+.metadata/
+.settings/
+.project
+.classpath
+.factorypath
+.springBeans
+.sts4-cache/
+.recommenders/
+.apt_generated/
+.apt_generated_tests/
+.spring-boot-devtools.properties
+
+# ==========================================
+# MAVEN
+# ==========================================
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# Mantener Maven Wrapper
+!.mvn/wrapper/maven-wrapper.jar
+
+# ==========================================
+# JAVA
+# ==========================================
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+# ==========================================
+# INTELLIJ / VS CODE
+# ==========================================
+.idea/
+*.iml
+.vscode/
+
+# ==========================================
+# SISTEMA OPERATIVO
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# ARCHIVOS TEMPORALES
+# ==========================================
+*.tmp
+*.bak
+*.swp
+*~

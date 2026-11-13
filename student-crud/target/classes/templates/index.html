@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>Student CRUD</title></head>
+<body>
+<h2>Student Management</h2>
+
+<form action="/add" method="post">
+    <input name="rollNo" placeholder="Roll No" required />
+    <input name="name" placeholder="Name" required />
+    <input name="semester" type="number" placeholder="Semester" required />
+    <input name="cgpa" type="number" step="0.01" placeholder="CGPA" required />
+    <input name="phoneNumber" placeholder="Phone Number" required />
+    <button type="submit">Add Student</button>
+</form>
+
+<form action="/delete" method="post">
+    <input name="rollNo" placeholder="Roll No" required />
+    <button type="submit">Delete Student</button>
+</form>
+
+<a href="/display"><button>Display All Students</button></a>
+
+<form action="/display/" method="get" onsubmit="event.preventDefault(); window.location='/display/' + this.rollNo.value;">
+    <input name="rollNo" placeholder="Roll No" required />
+    <button type="submit">Display One Student</button>
+</form>
+
+<p th:text="${message}"></p>
+</body>
+</html>
