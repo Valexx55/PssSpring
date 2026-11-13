@@ -1,6 +1,7 @@
 package edu.pss.spring.config;
 
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.Step;
@@ -82,7 +83,19 @@ public class ConfigBatch1 {
 	 * @return
 	 */
 	@Bean
-	public Job jobGestionFichero() {
-		return null;
+	public Job jobGestionFichero(JobRepository jobRepository, Step comprobarFichero, 
+			Step crearDirectorioSalida, Step procesarFichero, Step archivarFichero
+			) {
+		
+		Job trabajoCompleto = null;
+		
+			trabajoCompleto = new JobBuilder("jobGestionFichero", jobRepository)
+					.start(comprobarFichero)
+					.next(crearDirectorioSalida)
+					.next(procesarFichero)
+					.next(archivarFichero)
+					.build();
+	
+		return trabajoCompleto;
 	}
 }
