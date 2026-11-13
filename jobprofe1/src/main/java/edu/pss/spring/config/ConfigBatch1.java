@@ -8,6 +8,7 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.StepContribution;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -44,7 +45,10 @@ public class ConfigBatch1 {
 			pasoProcesarFichero = new StepBuilder("procesarFichero", jobRepository)
 					.tasklet((StepContribution contribution, ChunkContext chunkContext) -> {
 						System.out.println("En procesarFichero");
-						return RepeatStatus.FINISHED;
+						
+						throw new RuntimeException("Fallo procesando el fichero");
+						
+						//return RepeatStatus.FINISHED;
 					}, transactionManager).build();
 
 	    return pasoProcesarFichero;
@@ -64,7 +68,7 @@ public class ConfigBatch1 {
 	}
 
 	@Bean
-	public Step comprobarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+	public Step comprobarFichero (JobRepository jobRepository, PlatformTransactionManager transactionManager) {
 		Step stepComprobarFichero = null;
 
 			stepComprobarFichero = new StepBuilder("comprobarFichero", jobRepository)
@@ -98,4 +102,31 @@ public class ConfigBatch1 {
 	
 		return trabajoCompleto;
 	}
+	
+	
+	/**
+	 * 
+	 * @see @Qualifier Cuando en el contexto de spring tengo varios beans candidatos, en ocasiones puede haber un problema
+	 * porque Spring no identifica al bean que yo quiero. En este caso, tengo varios Steps y con el parámetro paso1, podrían
+	 * coincidir varios candidatos. Usando esta anotación, le digo a Spring que quiero el Step identificado por ese nombre
+	 * (que es el nombre del método)
+	 */
+	/*
+	@Bean
+	public Job jobGestionFichero(JobRepository jobRepository, @Qualifier("comprobarFichero") Step  paso1, 
+			Step crearDirectorioSalida, Step procesarFichero, Step archivarFichero
+			) {
+		
+		Job trabajoCompleto = null;
+		
+			trabajoCompleto = new JobBuilder("jobGestionFichero", jobRepository)
+					.start(paso1)
+					.next(crearDirectorioSalida)
+					.next(procesarFichero)
+					.next(archivarFichero)
+					.build();
+	
+		return trabajoCompleto;
+	}
+	*/
 }
