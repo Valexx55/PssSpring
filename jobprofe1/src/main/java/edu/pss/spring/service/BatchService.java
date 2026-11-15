@@ -3,6 +3,7 @@ package edu.pss.spring.service;
 
 import java.util.UUID;
 
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
@@ -56,4 +57,29 @@ public class BatchService {
 
         return jobOperator.start(jobGestionClientesSQL, parametros);
     }
+    
+
+public JobExecution reiniciarEjecucion(Long idEjecucion) throws Exception {
+
+    // Recuperamos la ejecución original de la base de datos
+    JobExecution ejecucionAnterior =
+            jobRepository.getJobExecution(idEjecucion);
+
+    if (ejecucionAnterior == null) {
+        throw new IllegalArgumentException(
+                "No existe la ejecución: " + idEjecucion
+        );
+    }
+
+    // Solo permitimos reiniciar una ejecución fallida
+    if (ejecucionAnterior.getStatus() != BatchStatus.FAILED) {
+        throw new IllegalStateException(
+                "La ejecución no está en estado FAILED"
+        );
+    }
+
+    // Reiniciamos la misma instancia del Job
+    return jobOperator.restart(ejecucionAnterior);
+}
+
 }

@@ -85,4 +85,17 @@ public class BatchController {
             Long idEjecucion,
             String estado
     ) {}
+    
+    
+    @PostMapping("/reiniciar/{id}")
+    public ResultadoBatch reiniciar(
+            @PathVariable("id") Long id) throws Exception {
+
+        JobExecution ejecucion = batchService.reiniciarEjecucion(id);
+
+        return new ResultadoBatch(
+                ejecucion.getId(),
+                ejecucion.getStatus().toString()
+        );
+    }
 }

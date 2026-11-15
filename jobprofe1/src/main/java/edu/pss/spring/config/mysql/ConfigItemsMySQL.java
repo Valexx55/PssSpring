@@ -8,6 +8,7 @@ import org.springframework.batch.infrastructure.item.database.JdbcBatchItemWrite
 import org.springframework.batch.infrastructure.item.database.JdbcCursorItemReader;
 import org.springframework.batch.infrastructure.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.infrastructure.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -41,15 +42,26 @@ public class ConfigItemsMySQL {
 
     // ITEM PROCESSOR: transformacion de los clientes
     @Bean
-    public ItemProcessor<Cliente, Cliente> clienteProcessor() {
+    public ItemProcessor<Cliente, Cliente> clienteProcessor( @Value("${batch.demo.fallar:false}") boolean provocarError) {
 
-        return cliente -> new Cliente(
+    	 
+    	
+    	return cliente -> {
+
+            if (provocarError && cliente.id() == 18) {
+                throw new IllegalStateException(
+                    "ERROR SIMULADO: cliente ID 18"
+                );
+            }
+
+            return new Cliente(
                 cliente.id(),
-                cliente.nombre().trim().toUpperCase(),
-                cliente.email().trim().toLowerCase(),
-                cliente.ciudad().trim().toUpperCase(),
+                cliente.nombre().toUpperCase(),
+                cliente.email().toLowerCase(),
+                cliente.ciudad().toUpperCase(),
                 true
-        );
+            );
+        };
     }
 
     // ITEM WRITER: escritura en MySQL
