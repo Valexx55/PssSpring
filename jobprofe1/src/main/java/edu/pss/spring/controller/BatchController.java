@@ -2,6 +2,9 @@
 package edu.pss.spring.controller;
 
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +30,25 @@ public class BatchController {
         return new ResultadoBatch(
                 ejecucion.getId(),
                 ejecucion.getStatus().toString()
+        );
+    }
+    
+    @GetMapping("/ejecuciones/{id}")
+    public ResponseEntity<ResultadoBatch> consultar(
+            @PathVariable Long id) {
+
+        JobExecution ejecucion =
+                batchService.consultarEjecucion(id);
+
+        if (ejecucion == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(
+                new ResultadoBatch(
+                        ejecucion.getId(),
+                        ejecucion.getStatus().toString()
+                )
         );
     }
 

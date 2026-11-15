@@ -8,6 +8,7 @@ import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -16,14 +17,17 @@ public class BatchService {
 
     private final JobOperator jobOperator;
     private final Job jobGestionFichero;
+    private final JobRepository jobRepository;
 
     // Inyección de dependencias por constructor
     public BatchService(
             JobOperator jobOperator,
-            @Qualifier("jobGestionFichero") Job jobGestionFichero) {
+            @Qualifier("jobGestionFichero") Job jobGestionFichero,
+            JobRepository jobRepository) {
 
         this.jobOperator = jobOperator;
         this.jobGestionFichero = jobGestionFichero;
+        this.jobRepository = jobRepository;
     }
 
     public JobExecution ejecutarFichero() throws Exception {
@@ -35,5 +39,9 @@ public class BatchService {
 
         // Lanzamos nuestro Job
         return jobOperator.start(jobGestionFichero, parametros);
+    }
+    
+    public JobExecution consultarEjecucion(Long id) {
+        return jobRepository.getJobExecution(id);
     }
 }
