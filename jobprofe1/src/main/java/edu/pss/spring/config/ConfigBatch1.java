@@ -35,7 +35,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * STEP 1 - Comprobar Fichero STEP 2 - Crear directorio Salida STEP 3 - Procesar
  * Fichero STEP 4 - Archivar Fichero
  */
-@Configuration
+//@Configuration
 public class ConfigBatch1 {
 
 	// private final Step comprobarFichero;
