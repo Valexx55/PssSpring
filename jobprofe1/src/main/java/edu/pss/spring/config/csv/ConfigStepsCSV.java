@@ -29,7 +29,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import edu.pss.spring.Cliente;
+import edu.pss.spring.model.Cliente;
+
 
 /**
  * En esta clase, declaramos nuestro JOB (bean) y los STEPS que lo componen

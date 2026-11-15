@@ -11,7 +11,7 @@ import org.springframework.batch.infrastructure.item.database.builder.JdbcCursor
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import edu.pss.spring.Cliente;
+import edu.pss.spring.model.Cliente;
 
 @Configuration
 public class ConfigItemsMySQL {

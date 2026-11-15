@@ -5,12 +5,15 @@ import org.springframework.batch.core.listener.ChunkListener;
 import org.springframework.batch.infrastructure.item.Chunk;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
-import edu.pss.spring.Cliente;
+import edu.pss.spring.model.Cliente;
 
 @Configuration
+@EnableScheduling
 public class ConfigChunkListener {
 
+	//ItemProcesor, ItemReader ok
     @Bean
     public ChunkListener<Cliente, Cliente> listenerChunks() {
 
