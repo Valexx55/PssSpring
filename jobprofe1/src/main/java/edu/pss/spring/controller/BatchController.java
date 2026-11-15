@@ -21,6 +21,17 @@ public class BatchController {
     public BatchController(BatchService batchService) {
         this.batchService = batchService;
     }
+    
+    @PostMapping("/ejecutar-sql")
+    public ResultadoBatch ejecutarSQL() throws Exception {
+
+        JobExecution ejecucion = batchService.ejecutarSQL();
+
+        return new ResultadoBatch(
+                ejecucion.getId(),
+                ejecucion.getStatus().toString()
+        );
+    }
 
     @PostMapping("/ejecutar")
     public ResultadoBatch ejecutar() throws Exception {

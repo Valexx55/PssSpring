@@ -137,7 +137,7 @@ public class ConfigStepsCSV {
 							registrosCorrectos++;
 							contribution.incrementReadCount();
 							
-							Cliente cliente = new Cliente(Integer.parseInt(id), nombre, email, ciudad);
+							Cliente cliente = new Cliente(Integer.parseInt(id), nombre, email, ciudad, false);
 							
 							mapaLocalidadClientes.computeIfAbsent(ciudad, k -> new ArrayList<>()).add(cliente);
 						}

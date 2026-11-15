@@ -18,16 +18,19 @@ public class BatchService {
     private final JobOperator jobOperator;
     private final Job jobGestionFichero;
     private final JobRepository jobRepository;
+    private final Job jobGestionClientesSQL;
 
     // Inyección de dependencias por constructor
     public BatchService(
             JobOperator jobOperator,
             @Qualifier("jobGestionFichero") Job jobGestionFichero,
-            JobRepository jobRepository) {
+            JobRepository jobRepository,
+            @Qualifier("jobGestionClientesSQL") Job jobGestionClientesSQL) {
 
         this.jobOperator = jobOperator;
         this.jobGestionFichero = jobGestionFichero;
         this.jobRepository = jobRepository;
+        this.jobGestionClientesSQL = jobGestionClientesSQL;
     }
 
     public JobExecution ejecutarFichero() throws Exception {
@@ -43,5 +46,14 @@ public class BatchService {
     
     public JobExecution consultarEjecucion(Long id) {
         return jobRepository.getJobExecution(id);
+    }
+    
+    public JobExecution ejecutarSQL() throws Exception {
+
+        JobParameters parametros = new JobParametersBuilder()
+                .addString("idSolicitud", UUID.randomUUID().toString())
+                .toJobParameters();
+
+        return jobOperator.start(jobGestionClientesSQL, parametros);
     }
 }
