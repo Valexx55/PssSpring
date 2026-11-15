@@ -7,6 +7,7 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.batch.infrastructure.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.infrastructure.item.database.JdbcCursorItemReader;
+import org.springframework.batch.core.listener.ChunkListener;
 import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -26,11 +27,13 @@ public class ConfigStepsMySQL {
             ItemProcessor<Cliente, Cliente> clienteProcessor,
             JdbcBatchItemWriter<Cliente> clienteWriter,
             @Qualifier("listenerInfoStep")
-            StepExecutionListener listenerInfoStep) {
+            StepExecutionListener listenerInfoStep,
+            @Qualifier("listenerChunks")
+            ChunkListener<Cliente, Cliente> listenerChunks) {
 
         return new StepBuilder("procesarClientesSQL", jobRepository)
 
-                .<Cliente, Cliente>chunk(10)
+                .<Cliente, Cliente>chunk(7)
 
                 .transactionManager(transactionManager)
 
@@ -41,6 +44,7 @@ public class ConfigStepsMySQL {
                 .writer(clienteWriter)
 
                 .listener(listenerInfoStep)
+                .listener(listenerChunks)
 
                 .build();
     }
