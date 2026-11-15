@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.batch.core.job.AbstractJob;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -39,6 +40,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class ConfigJobCSV {
 
 
+	public static int numero_steps;
 
 	// esto es una forma de instanciar un bean para el contexto de spring
 	/**
@@ -55,6 +57,16 @@ public class ConfigJobCSV {
 		trabajoCompleto = new JobBuilder("jobGestionFichero", jobRepository).start(comprobarFichero)
 				.next(crearDirectorioSalida).next(procesarFichero).next(archivarFichero).listener(listenerInfoJob).build();
 
+		if (trabajoCompleto instanceof AbstractJob job) {
+
+		    System.out.println("Total Steps: "
+		            + job.getStepNames().size());
+		    
+		    numero_steps = job.getStepNames().size();
+
+		    job.getStepNames().forEach(System.out::println);
+		}
+		
 		return trabajoCompleto;
 	}
 

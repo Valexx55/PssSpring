@@ -5,7 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
@@ -25,6 +28,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import edu.pss.spring.Cliente;
 
 /**
  * En esta clase, declaramos nuestro JOB (bean) y los STEPS que lo componen
@@ -75,6 +80,9 @@ public class ConfigStepsCSV {
 
 		pasoProcesarFichero = new StepBuilder("procesarFichero", jobRepository)
 				.tasklet((StepContribution contribution, ChunkContext chunkContext) -> {
+					
+					Map<String, List<Cliente>> mapaLocalidadClientes = new HashMap<>();
+					
 					System.out.println("En procesarFichero");
 
 					Path ficheroEntrada = Paths.get(this.rutaEntrada, this.nombreFichero);
@@ -128,6 +136,10 @@ public class ConfigStepsCSV {
 							lineasSalida.add(lineaTx);
 							registrosCorrectos++;
 							contribution.incrementReadCount();
+							
+							Cliente cliente = new Cliente(Integer.parseInt(id), nombre, email, ciudad);
+							
+							mapaLocalidadClientes.computeIfAbsent(ciudad, k -> new ArrayList<>()).add(cliente);
 						}
 					}
 
@@ -159,7 +171,32 @@ public class ConfigStepsCSV {
 
 					contribution.incrementWriteCount(registrosCorrectos);
 					contribution.incrementFilterCount(registrosIncorrectos);
+					
+					System.out.println("Mapa clientes " + mapaLocalidadClientes);
+					
+					String localidadMasClientes = mapaLocalidadClientes.entrySet()
+					        .stream()
+					        .max(Comparator.comparingInt(
+					                entrada -> entrada.getValue().size()
+					        ))
+					        .map(Map.Entry::getKey)
+					        .orElse("NINGUNA");
+					
+					System.out.println("Localidad con más clientes: "
+					        + localidadMasClientes);
+					
+					String localidadMasLarga = mapaLocalidadClientes.keySet()
+					        .stream()
+					        .max(Comparator.comparingInt(String::length))
+					        .orElse("NINGUNA");
+					
+					System.out.println("Localidad con nombre más largo: "
+					        + localidadMasLarga);
 
+					int numeroLocalidades = mapaLocalidadClientes.size();
+
+					System.out.println("Localidades distintas: " + numeroLocalidades);
+					
 					return RepeatStatus.FINISHED;
 				}, transactionManager).listener(listenerInfoStep).build();
 

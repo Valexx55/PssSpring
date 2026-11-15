@@ -39,6 +39,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class ConfigListenersCSV {
 
 
+
 	@Bean
 	public JobExecutionListener listenerInfoJob() {
 
@@ -84,6 +85,10 @@ public class ConfigListenersCSV {
 	            
 	            System.out.println("Último Step: "
 	                    + jobContext.getString("ultimoStep", "NINGUNO"));
+	            
+	            float porcetanjeHechos = ((float)jobContext.getInt("stepsIniciados", 0)/ConfigJobCSV.numero_steps)*100;
+	            
+	            System.out.println("porcetanjeHechos " + porcetanjeHechos);
 
 	            System.out.println("\n--- JOB EXECUTION CONTEXT ---");
 
