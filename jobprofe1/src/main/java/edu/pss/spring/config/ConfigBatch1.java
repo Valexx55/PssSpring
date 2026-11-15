@@ -9,11 +9,14 @@ import java.util.List;
 
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.StepContribution;
+import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.infrastructure.item.ExecutionContext;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 //import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +53,67 @@ public class ConfigBatch1 {
     /*ConfigBatch1(Step comprobarFichero) {
         this.comprobarFichero = comprobarFichero;
     }*/
+	
+	
+	@Bean
+	public StepExecutionListener listenerInfoStep() {
+
+	    return new StepExecutionListener() {
+
+	        @Override
+	        public void beforeStep(StepExecution stepExecution) {
+	            System.out.println("=== INICIO DEL STEP ===");
+	            String resumenPre = stepExecution.getSummary();
+	            System.out.println(resumenPre);
+	            
+	            
+	            ExecutionContext jobContext =
+	                    stepExecution.getJobExecution().getExecutionContext();
+	            
+	            int stepsIniciados =
+	                    jobContext.getInt("stepsIniciados", 0);
+
+	            // Lo incrementamos
+	            jobContext.putInt("stepsIniciados", stepsIniciados + 1);
+
+	            // Guardamos el nombre del Step que acaba de comenzar
+	            jobContext.putString(
+	                    "ultimoStep",
+	                    stepExecution.getStepName()
+	            );
+	        }
+
+	        @Override
+	        public org.springframework.batch.core.ExitStatus
+	                afterStep(StepExecution stepExecution) {
+
+	            System.out.println("=== FIN DEL STEP ===");
+	            String resumenPost = stepExecution.getSummary();
+	            System.out.println(resumenPost);
+	            
+	            // Recuperamos el contexto de ejecución del Step
+	            ExecutionContext context = stepExecution.getExecutionContext();
+
+	            System.out.println("===== EXECUTION CONTEXT =====");
+
+	            System.out.println("Registros leídos: " +
+	                    context.getInt("registrosLeidos", 0));
+
+	            System.out.println("Registros correctos: " +
+	                    context.getInt("registrosCorrectos", 0));
+
+	            System.out.println("Registros incorrectos: " +
+	                    context.getInt("registrosIncorrectos", 0));
+
+	            stepExecution.getFailureExceptions()
+	                    .forEach(e ->
+	                        System.out.println("ERROR: " + e.getMessage())
+	                    );
+
+	            return null;
+	        }
+	    };
+	}
 
 	@Bean
 	public Step archivarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
@@ -65,7 +129,7 @@ public class ConfigBatch1 {
 	}
 
 	@Bean
-	public Step procesarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+	public Step procesarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager, StepExecutionListener listenerInfoStep) {
 		Step pasoProcesarFichero = null;
 
 			pasoProcesarFichero = new StepBuilder("procesarFichero", jobRepository)
@@ -125,6 +189,7 @@ public class ConfigBatch1 {
 								
 								lineasSalida.add(lineaTx);
 								registrosCorrectos++;
+								contribution.incrementReadCount();
 							}
 						}
 						
@@ -142,8 +207,28 @@ public class ConfigBatch1 {
 						
 						//TODO actualizar StepExecutionContext y JobExecutionContext
 						
+						StepExecution stepExecution =
+						        contribution.getStepExecution();
+
+						System.out.println("ID: " + stepExecution.getId());
+						System.out.println("Step: " + stepExecution.getStepName());
+						System.out.println("Estado: " + stepExecution.getStatus());
+
+						// Recuperamos su contexto
+						ExecutionContext stepContext =
+						        stepExecution.getExecutionContext();
+
+						// Guardamos los contadores
+						stepContext.putInt("registrosLeidos", registrosLeidos);
+						stepContext.putInt("registrosCorrectos", registrosCorrectos);
+						stepContext.putInt("registrosIncorrectos", registrosIncorrectos);
+						
+						contribution.incrementWriteCount(registrosCorrectos);
+						contribution.incrementFilterCount(registrosIncorrectos);
+						
 						return RepeatStatus.FINISHED;
-					}, transactionManager).build();
+					}, transactionManager).
+					listener(listenerInfoStep).build();
 
 	    return pasoProcesarFichero;
 	}
