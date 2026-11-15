@@ -1,14 +1,11 @@
-package edu.pss.spring.config;
+package edu.pss.spring.config.csv;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
@@ -29,8 +26,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import edu.pss.spring.Cliente;
-
 /**
  * En esta clase, declaramos nuestro JOB (bean) y los STEPS que lo componen
  * (también serán beans)
@@ -40,9 +35,10 @@ import edu.pss.spring.Cliente;
  * STEP 1 - Comprobar Fichero STEP 2 - Crear directorio Salida STEP 3 - Procesar
  * Fichero STEP 4 - Archivar Fichero
  */
-@Configuration
-public class ConfigStepsCSV {
+//@Configuration
+public class ConfigBatch1 {
 
+	// private final Step comprobarFichero;
 
 	@Value("${batch.ruta.entrada}") // con Value, SPRING inyecta el valor de la propieda definido en el fichero
 									// properties
@@ -57,7 +53,151 @@ public class ConfigStepsCSV {
 	@Value("${batch.fichero}")
 	private String nombreFichero;
 
+	/*
+	 * ConfigBatch1(Step comprobarFichero) { this.comprobarFichero =
+	 * comprobarFichero; }
+	 */
 	
+	
+	@Bean
+	public JobExecutionListener listenerInfoJob() {
+
+	    return new JobExecutionListener() {
+
+	        @Override
+	        public void beforeJob(JobExecution jobExecution) {
+
+	            System.out.println("\n===== INICIO DEL JOB =====");
+
+	            System.out.println("Job: "
+	                    + jobExecution.getJobInstance().getJobName());
+
+	            System.out.println("ID ejecución: "
+	                    + jobExecution.getId());
+
+	            System.out.println("Estado: "
+	                    + jobExecution.getStatus());
+	        }
+
+	        @Override
+	        public void afterJob(JobExecution jobExecution) {
+
+	            System.out.println("\n===== RESUMEN FINAL DEL JOB =====");
+
+	            System.out.println("Job: "
+	                    + jobExecution.getJobInstance().getJobName());
+
+	            System.out.println("ID ejecución: "
+	                    + jobExecution.getId());
+
+	            System.out.println("Estado final: "
+	                    + jobExecution.getStatus());
+
+	            // Contexto compartido del Job
+	            ExecutionContext jobContext =
+	                    jobExecution.getExecutionContext();
+	            
+
+	            System.out.println("Steps iniciados: "
+	                    + jobContext.getInt("stepsIniciados", 0));
+	            
+	            
+	            System.out.println("Último Step: "
+	                    + jobContext.getString("ultimoStep", "NINGUNO"));
+
+	            System.out.println("\n--- JOB EXECUTION CONTEXT ---");
+
+	            jobContext.entrySet().forEach(entrada ->
+	                System.out.println(
+	                    entrada.getKey() + " = " + entrada.getValue()
+	                )
+	            );
+
+	            // Resumen de las ejecuciones de los Steps
+	            System.out.println("\n--- STEPS EJECUTADOS ---");
+
+	            for (StepExecution step : jobExecution.getStepExecutions()) {
+
+	                System.out.println("\nStep: "
+	                        + step.getStepName());
+
+	                System.out.println("ID: " + step.getId());
+	                System.out.println("Estado: " + step.getStatus());
+
+	                System.out.println("Leídos: " + step.getReadCount());
+	                System.out.println("Escritos: " + step.getWriteCount());
+	                System.out.println("Filtrados: " + step.getFilterCount());
+
+	                // Contexto propio de cada Step
+	                ExecutionContext stepContext =
+	                        step.getExecutionContext();
+
+	                stepContext.entrySet().forEach(entrada ->
+	                    System.out.println(
+	                        entrada.getKey() + " = " + entrada.getValue()
+	                    )
+	                );
+	                
+	                
+	            }
+
+	            System.out.println("\n===== FIN DEL RESUMEN JOB =====");
+	        }
+	    };
+	}
+
+	@Bean
+	public StepExecutionListener listenerInfoStep() {
+
+		return new StepExecutionListener() {
+
+			@Override
+			public void beforeStep(StepExecution stepExecution) {
+				System.out.println("\n\n=== INICIO DEL STEP ===");
+				String resumenPre = stepExecution.getSummary();
+				System.out.println(resumenPre);
+
+				//cogemos el contexto del trabajo
+				ExecutionContext jobContext = stepExecution.getJobExecution().getExecutionContext();
+
+				int stepsIniciados = jobContext.getInt("stepsIniciados", 0);
+
+				// Lo incrementamos
+				jobContext.putInt("stepsIniciados", stepsIniciados + 1);
+
+				// Guardamos el nombre del Step que acaba de comenzar
+				jobContext.putString("ultimoStep", stepExecution.getStepName());
+			}
+
+			@Override
+			public org.springframework.batch.core.ExitStatus afterStep(StepExecution stepExecution) {
+				
+				System.out.println("\n\n=== FIN DEL STEP ===");
+				String resumenPost = stepExecution.getSummary();
+				System.out.println(resumenPost);
+
+				// Recuperamos el contexto de ejecución del Step
+				ExecutionContext context = stepExecution.getExecutionContext();
+
+				String nombreStep = stepExecution.getStepName();
+				if (nombreStep.equals("procesarFichero")) {
+
+					//imprimimos el contexto sólo si el nombre del paso es procesarFichero
+					System.out.println("\n\n===== EXECUTION CONTEXT =====");
+
+					System.out.println("Registros leídos: " + context.getInt("registrosLeidos", 0));
+
+					System.out.println("Registros correctos: " + context.getInt("registrosCorrectos", 0));
+
+					System.out.println("Registros incorrectos: " + context.getInt("registrosIncorrectos", 0));
+
+				}
+				stepExecution.getFailureExceptions().forEach(e -> System.out.println("ERROR: " + e.getMessage()));
+
+				return null;
+			}
+		};
+	}
 
 	@Bean
 	public Step archivarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager,
@@ -80,9 +220,6 @@ public class ConfigStepsCSV {
 
 		pasoProcesarFichero = new StepBuilder("procesarFichero", jobRepository)
 				.tasklet((StepContribution contribution, ChunkContext chunkContext) -> {
-					
-					Map<String, List<Cliente>> mapaLocalidadClientes = new HashMap<>();
-					
 					System.out.println("En procesarFichero");
 
 					Path ficheroEntrada = Paths.get(this.rutaEntrada, this.nombreFichero);
@@ -136,10 +273,6 @@ public class ConfigStepsCSV {
 							lineasSalida.add(lineaTx);
 							registrosCorrectos++;
 							contribution.incrementReadCount();
-							
-							Cliente cliente = new Cliente(Integer.parseInt(id), nombre, email, ciudad, false);
-							
-							mapaLocalidadClientes.computeIfAbsent(ciudad, k -> new ArrayList<>()).add(cliente);
 						}
 					}
 
@@ -171,32 +304,7 @@ public class ConfigStepsCSV {
 
 					contribution.incrementWriteCount(registrosCorrectos);
 					contribution.incrementFilterCount(registrosIncorrectos);
-					
-					System.out.println("Mapa clientes " + mapaLocalidadClientes);
-					
-					String localidadMasClientes = mapaLocalidadClientes.entrySet()
-					        .stream()
-					        .max(Comparator.comparingInt(
-					                entrada -> entrada.getValue().size()
-					        ))
-					        .map(Map.Entry::getKey)
-					        .orElse("NINGUNA");
-					
-					System.out.println("Localidad con más clientes: "
-					        + localidadMasClientes);
-					
-					String localidadMasLarga = mapaLocalidadClientes.keySet()
-					        .stream()
-					        .max(Comparator.comparingInt(String::length))
-					        .orElse("NINGUNA");
-					
-					System.out.println("Localidad con nombre más largo: "
-					        + localidadMasLarga);
 
-					int numeroLocalidades = mapaLocalidadClientes.size();
-
-					System.out.println("Localidades distintas: " + numeroLocalidades);
-					
 					return RepeatStatus.FINISHED;
 				}, transactionManager).listener(listenerInfoStep).build();
 
@@ -249,5 +357,44 @@ public class ConfigStepsCSV {
 		return stepComprobarFichero;
 	}
 
+	// esto es una forma de instanciar un bean para el contexto de spring
+	/**
+	 * Este será el JOB o mi tarea principal en este flujo Batch
+	 * 
+	 * @return
+	 */
+	@Bean
+	public Job jobGestionFichero(JobRepository jobRepository, Step comprobarFichero, Step crearDirectorioSalida,
+			Step procesarFichero, Step archivarFichero, JobExecutionListener listenerInfoJob) {
 
+		Job trabajoCompleto = null;
+
+		trabajoCompleto = new JobBuilder("jobGestionFichero", jobRepository).start(comprobarFichero)
+				.next(crearDirectorioSalida).next(procesarFichero).next(archivarFichero).listener(listenerInfoJob).build();
+
+		return trabajoCompleto;
+	}
+
+	/**
+	 * 
+	 * @see @Qualifier Cuando en el contexto de spring tengo varios beans
+	 *      candidatos, en ocasiones puede haber un problema porque Spring no
+	 *      identifica al bean que yo quiero. En este caso, tengo varios Steps y con
+	 *      el parámetro paso1, podrían coincidir varios candidatos. Usando esta
+	 *      anotación, le digo a Spring que quiero el Step identificado por ese
+	 *      nombre (que es el nombre del método)
+	 */
+	/*
+	 * @Bean public Job jobGestionFichero(JobRepository
+	 * jobRepository, @Qualifier("comprobarFichero") Step paso1, Step
+	 * crearDirectorioSalida, Step procesarFichero, Step archivarFichero ) {
+	 * 
+	 * Job trabajoCompleto = null;
+	 * 
+	 * trabajoCompleto = new JobBuilder("jobGestionFichero", jobRepository)
+	 * .start(paso1) .next(crearDirectorioSalida) .next(procesarFichero)
+	 * .next(archivarFichero) .build();
+	 * 
+	 * return trabajoCompleto; }
+	 */
 }

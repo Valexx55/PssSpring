@@ -1,5 +1,5 @@
 
-package edu.pss.spring.config;
+package edu.pss.spring.config.mysql;
 
 import javax.sql.DataSource;
 

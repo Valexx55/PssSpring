@@ -1,4 +1,4 @@
-package edu.pss.spring.config;
+package edu.pss.spring.config.csv;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

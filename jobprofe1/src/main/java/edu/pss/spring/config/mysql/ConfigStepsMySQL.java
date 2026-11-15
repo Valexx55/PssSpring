@@ -1,5 +1,5 @@
 
-package edu.pss.spring.config;
+package edu.pss.spring.config.mysql;
 
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
