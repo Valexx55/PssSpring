@@ -1,6 +1,8 @@
 package edu.pss.spring.controller;
 
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,5 +41,17 @@ public class BatchController {
 				 );
 	}
 	
+	
+	//TODO controlar el caso de que el trabajo consultado no existe
+	@GetMapping("/consultas-pasadas/{id}")
+	public ResultadoBatch ejecutarConsultasPasadas (@PathVariable Long id) throws Exception
+	{
+		 //JobExecution jobExecution = this.batchService.ejecucionConsulta(2);
+		 JobExecution jobExecution = this.batchService.ejecucionConsulta(id);
+		 return new ResultadoBatch (
+				 jobExecution.getId(),
+				 jobExecution.getStatus().toString()
+				 );
+	}
 	
 }

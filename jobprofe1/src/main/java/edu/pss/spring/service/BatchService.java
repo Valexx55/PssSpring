@@ -11,20 +11,29 @@ import org.springframework.batch.core.launch.JobExecutionAlreadyRunningException
 import org.springframework.batch.core.launch.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.JobRestartException;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service
 public class BatchService {
 	
+	//para lanzar trabajos manualmente
 	JobOperator jobOperator;
+	
 	Job jobGestionFichero;
+	//para leer del histórico de trabajos
+	JobRepository jobRepository;
 	
 	//joboperator nos permite laznar trabajos progrmáticamente
-	public BatchService (JobOperator jobOperator, @Qualifier("jobGestionFichero") Job jobGestionFichero)
+	public BatchService (JobOperator jobOperator, @Qualifier("jobGestionFichero") Job jobGestionFichero, 
+			JobRepository jobRepository)
 	{
+		 //jobRepository.getJobExecution(55);
+		
 		this.jobOperator = jobOperator;
 		this.jobGestionFichero = jobGestionFichero;
+		this.jobRepository = jobRepository;
 	}
 	
 	//propagamos la execpción
@@ -34,5 +43,11 @@ public class BatchService {
 		JobParameters parametros = new JobParametersBuilder().addString("idSolicitud", UUID.randomUUID().toString()).toJobParameters();
 		return this.jobOperator.start(this.jobGestionFichero, parametros);
 	}
+	
+	public JobExecution ejecucionConsulta (long idEjecucion) throws Exception
+	{
+		return jobRepository.getJobExecution(idEjecucion);
+	}
+
 
 }
