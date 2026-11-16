@@ -1,4 +1,4 @@
-package edu.pss.spring.config;
+package edu.pss.spring.config.csv;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -37,7 +37,9 @@ import org.springframework.transaction.PlatformTransactionManager;
  * STEP 1 - Comprobar Fichero STEP 2 - Crear directorio Salida STEP 3 - Procesar
  * Fichero STEP 4 - Archivar Fichero
  */
-@Configuration
+//Al refactorizar el proyecto (lo dividimos en más clases), comentamos esta clase para que no sea tenida
+//en cuenta por Spring al arranque y evitamos fallos por duplicidad de beans
+//@Configuration
 public class ConfigBatch1 {
 
 	@Value("${batch.ruta.entrada}") // con Value, SPRING inyecta el valor de la propieda definido en el fichero
