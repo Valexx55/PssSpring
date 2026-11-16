@@ -7,13 +7,18 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.StepContribution;
+import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.infrastructure.item.ExecutionContext;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 //import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +38,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 public class ConfigBatch1 {
 
-   // private final Step comprobarFichero;
+    
+
 	
 	@Value("${batch.ruta.entrada}") //con Value, SPRING inyecta el valor de la propieda definido en el fichero properties
 	private String rutaEntrada;
@@ -47,9 +53,38 @@ public class ConfigBatch1 {
 	@Value("${batch.fichero}")
 	private String nombreFichero;
 
-    /*ConfigBatch1(Step comprobarFichero) {
-        this.comprobarFichero = comprobarFichero;
-    }*/
+ 
+	
+	//deifnimos un listener para que escuche el ciclo de vida del paso: el antes de ejecutarse y el después
+	
+	@Bean
+	public StepExecutionListener listenerStep()
+	{
+		
+		return new StepExecutionListener() {
+			
+			@Override
+			public void beforeStep(StepExecution stepExecution) {
+				// TODO Auto-generated method stub
+				//StepExecutionListener.super.beforeStep(stepExecution);
+				System.out.println("\n=== INICIO DEL STEP ===");
+				String resumenPre = stepExecution.getSummary();
+				System.out.println(resumenPre);
+			}
+			
+			@Override
+			public @Nullable ExitStatus afterStep(StepExecution stepExecution) {
+				// TODO Auto-generated method stub
+				
+				System.out.println("\n=== FIN DEL STEP ===");
+				String resumenPost = stepExecution.getSummary();
+				System.out.println(resumenPost);
+				return null;
+			}
+			
+		};
+	}
+	
 
 	@Bean
 	public Step archivarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
@@ -65,7 +100,7 @@ public class ConfigBatch1 {
 	}
 
 	@Bean
-	public Step procesarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+	public Step procesarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager, StepExecutionListener listenerStep) {
 		Step pasoProcesarFichero = null;
 
 			pasoProcesarFichero = new StepBuilder("procesarFichero", jobRepository)
@@ -125,6 +160,7 @@ public class ConfigBatch1 {
 								
 								lineasSalida.add(lineaTx);
 								registrosCorrectos++;
+								contribution.incrementReadCount(); //actualizamos en el contexto cuántos registros hemos leído
 							}
 						}
 						
@@ -142,8 +178,28 @@ public class ConfigBatch1 {
 						
 						//TODO actualizar StepExecutionContext y JobExecutionContext
 						
+						StepExecution stepExecution = contribution.getStepExecution();
+						
+						System.out.println("INFO STEP EXECUTION");
+						System.out.println("ID = " +stepExecution.getId() + " NOMBRE " + stepExecution.getStepName() + " STATUS "  + stepExecution.getStatus());  
+						
+						//Acceso al COntexto del paso, para guardar la info que yo quiera o necesite
+						ExecutionContext contextoStep = stepExecution.getExecutionContext();
+						
+						//guardo información "custom" personalizada - variables mías
+						contextoStep.put("registrosLeidos", registrosLeidos);
+						contextoStep.put("registrosLeidos", registrosCorrectos);
+						contextoStep.put("registrosIncorrectos", registrosIncorrectos);
+						
+						//igualmente, puedo actualizar propiedades /valores que están predefinidos dentro del contexto
+						contribution.incrementWriteCount(registrosCorrectos);
+						contribution.incrementFilterCount(registrosIncorrectos);
+						
+						
 						return RepeatStatus.FINISHED;
-					}, transactionManager).build();
+					}, transactionManager)
+					.listener(listenerStep)//estoy asociando un listener a este step
+					.build();
 
 	    return pasoProcesarFichero;
 	}
