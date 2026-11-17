@@ -42,6 +42,18 @@ public class BatchController {
 	}
 	
 	
+	@PostMapping("/ejecutar-sql")
+	public ResultadoBatch ejecutarBatchMySQL () throws Exception
+	{
+		 JobExecution jobExecution = this.batchService.ejecutarJobBatchMySQL();
+		 
+		 return new ResultadoBatch (
+				 jobExecution.getId(),
+				 jobExecution.getStatus().toString()
+				 );
+	}
+	
+	
 	//TODO controlar el caso de que el trabajo consultado no existe
 	@GetMapping("/consultas-pasadas/{id}")
 	public ResultadoBatch ejecutarConsultasPasadas (@PathVariable Long id) throws Exception
