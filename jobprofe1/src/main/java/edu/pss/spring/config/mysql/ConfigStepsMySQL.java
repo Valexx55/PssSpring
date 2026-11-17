@@ -2,6 +2,7 @@ package edu.pss.spring.config.mysql;
 
 
 
+import org.springframework.batch.core.listener.ChunkListener;
 import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
@@ -26,18 +27,20 @@ public class ConfigStepsMySQL {
 			JdbcCursorItemReader<Cliente> clienteReader,
 			JdbcBatchItemWriter<Cliente> clienteWriter,
 			ItemProcessor<Cliente, Cliente> clienteProcesor,
-			@Qualifier("listenerStep") StepExecutionListener listenerStep)
+			@Qualifier("listenerStep") StepExecutionListener listenerStep,
+			ChunkListener<Cliente, Cliente> listenerChunks)
 			
 	{
 		Step pasoMysql = null;
 		
 			pasoMysql = new StepBuilder("procesarClientesSQL", jobRepository)
-					.<Cliente, Cliente>chunk(10)
+					.<Cliente, Cliente>chunk(4)
 					.transactionManager(transactionManager)
 					.reader(clienteReader)
 					.processor(clienteProcesor)
 					.writer(clienteWriter)
 					.listener(listenerStep)
+					.listener(listenerChunks)
 					.build();
 			
 		

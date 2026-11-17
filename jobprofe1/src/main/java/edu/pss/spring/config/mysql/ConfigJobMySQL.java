@@ -23,6 +23,7 @@ public class ConfigJobMySQL {
 			trabajoMySQL = new JobBuilder("jobGestionClientesSQL", jobRepository)
 					.start(procesarClientesSQL)
 					.listener(listenerJob)
+					//.listener(listenerChunks)
 					.build();
 		
 		return trabajoMySQL;
