@@ -2,6 +2,7 @@
 
 Repositorio de prácticas y ejemplos desarrollados durante la formación de **Spring Batch**.
 
+Acceso a [DOUCMENTACION](./DOCU)
 El proyecto permite estudiar la configuración y ejecución de trabajos batch con Spring Boot, así como su integración con una API REST mediante Spring Web MVC.
 
 ## Contenidos trabajados
@@ -11,6 +12,7 @@ El proyecto permite estudiar la configuración y ejecución de trabajos batch co
 - Gestión de ejecuciones y contextos con `JobRepository`, `JobExecution`, `StepExecution` y `ExecutionContext`.
 - Uso de *listeners* y seguimiento de ejecuciones.
 - Integración con Spring Web MVC para lanzar trabajos y consultar su estado.
+- Programación de jobs (Scheduling)
 
 ## Enlaces de formación
 
