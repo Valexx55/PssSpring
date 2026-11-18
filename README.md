@@ -2,7 +2,8 @@
 
 Repositorio de prácticas y ejemplos desarrollados durante la formación de **Spring Batch**.
 
-Acceso a [DOUCMENTACION](./DOCU)
+Acceso a la [Documentación](./DOCU)
+
 El proyecto permite estudiar la configuración y ejecución de trabajos batch con Spring Boot, así como su integración con una API REST mediante Spring Web MVC.
 
 ## Contenidos trabajados
