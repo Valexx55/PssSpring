@@ -1,0 +1,14 @@
+//ENUNCIADO PRÁCTICO
+
+De los clientes procesados en el trabajo, obtener:
+
+1) NÚMERO DE LOCALIDADES DISTINTAS PRESENTES EN EL FICHERO
+2) LOCALIDAD CON MÁS CLIENTES
+3) LOCALIDAD CON EL NOMBRE MÁS LARGO
+
+y además
+
+4) EL PORCENTAJE DE PASOS INICIADO 
+
+ESTOS 4 DATOS, DEBEN APARECER EN EL JOBCONTEXT para poder ser consultados al final de la tarea
+
