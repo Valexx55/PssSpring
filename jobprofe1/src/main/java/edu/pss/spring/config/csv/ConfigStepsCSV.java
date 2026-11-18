@@ -5,11 +5,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
-import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.listener.JobExecutionListener;
 import org.springframework.batch.core.listener.StepExecutionListener;
 import org.springframework.batch.core.repository.JobRepository;
@@ -20,16 +23,30 @@ import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.ExecutionContext;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
+//import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import edu.pss.spring.model.Cliente;
+
+
+/**
+ * En esta clase, declaramos nuestro JOB (bean) y los STEPS que lo componen
+ * (también serán beans)
+ * 
+ * JOB - GestionarFichero
+ * 
+ * STEP 1 - Comprobar Fichero STEP 2 - Crear directorio Salida STEP 3 - Procesar
+ * Fichero STEP 4 - Archivar Fichero
+ */
 @Configuration
 public class ConfigStepsCSV {
 
+
 	@Value("${batch.ruta.entrada}") // con Value, SPRING inyecta el valor de la propieda definido en el fichero
-	// properties
+									// properties
 	private String rutaEntrada;
 
 	@Value("${batch.ruta.procesados}")
@@ -41,28 +58,32 @@ public class ConfigStepsCSV {
 	@Value("${batch.fichero}")
 	private String nombreFichero;
 
+	
 
 	@Bean
 	public Step archivarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager,
-			StepExecutionListener listenerStep) {
+			StepExecutionListener listenerInfoStep) {
 		Step pasoArchivarFichero = null;
 
 		pasoArchivarFichero = new StepBuilder("archivarFichero", jobRepository)
 				.tasklet((StepContribution contribution, ChunkContext chunkContext) -> {
 					System.out.println("En archivarFichero");
 					return RepeatStatus.FINISHED;
-				}, transactionManager).listener(listenerStep).build();
+				}, transactionManager).listener(listenerInfoStep).build();
 
 		return pasoArchivarFichero;
 	}
 
 	@Bean
 	public Step procesarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager,
-			StepExecutionListener listenerStep) {
+			StepExecutionListener listenerInfoStep) {
 		Step pasoProcesarFichero = null;
 
 		pasoProcesarFichero = new StepBuilder("procesarFichero", jobRepository)
 				.tasklet((StepContribution contribution, ChunkContext chunkContext) -> {
+					
+					Map<String, List<Cliente>> mapaLocalidadClientes = new HashMap<>();
+					
 					System.out.println("En procesarFichero");
 
 					Path ficheroEntrada = Paths.get(this.rutaEntrada, this.nombreFichero);
@@ -102,9 +123,9 @@ public class ConfigStepsCSV {
 							lineasErrores.add(linea);
 							registrosIncorrectos++;
 						} else {
-						// caso correcto
-						// aplicamos una transformación: NOMBRE en MAYUS, el EMAIL en minusculas, LA
-						// ciudad en mayúsucalas, nueva propiedad activo=true
+							// caso correcto
+							// aplicamos una transformación: NOMBRE en MAYUS, el EMAIL en minusculas, LA
+							// ciudad en mayúsucalas, nueva propiedad activo=true
 
 							String nombre = campos[1].trim().toUpperCase();
 							String email = campos[2].trim().toLowerCase();
@@ -115,12 +136,15 @@ public class ConfigStepsCSV {
 
 							lineasSalida.add(lineaTx);
 							registrosCorrectos++;
-							contribution.incrementReadCount(); // actualizamos en el contexto cuántos registros hemos
-																// leído
+							contribution.incrementReadCount();
+							
+							Cliente cliente = new Cliente(Integer.parseInt(id), nombre, email, ciudad, false);
+							
+							mapaLocalidadClientes.computeIfAbsent(ciudad, k -> new ArrayList<>()).add(cliente);
 						}
 					}
 
-							// Generamos Ficheros de salida
+					// Generamos Ficheros de salida
 
 					if (registrosCorrectos > 0) {
 						Files.write(ficheroSalida, lineasSalida, StandardCharsets.UTF_8);
@@ -130,36 +154,59 @@ public class ConfigStepsCSV {
 						Files.write(ficheroErrores, lineasErrores, StandardCharsets.UTF_8);
 					}
 
+					// TODO actualizar StepExecutionContext y JobExecutionContext
 
 					StepExecution stepExecution = contribution.getStepExecution();
 
-					System.out.println("INFO STEP EXECUTION");
-					System.out.println("ID = " + stepExecution.getId() + " NOMBRE " + stepExecution.getStepName()
-							+ " STATUS " + stepExecution.getStatus());
+					System.out.println("ID: " + stepExecution.getId());
+					System.out.println("Step: " + stepExecution.getStepName());
+					System.out.println("Estado: " + stepExecution.getStatus());
 
-						// Acceso al COntexto del paso, para guardar la info que yo quiera o necesite
-					ExecutionContext contextoStep = stepExecution.getExecutionContext();
+					// Recuperamos su contexto
+					ExecutionContext stepContext = stepExecution.getExecutionContext();
 
-						// guardo información "custom" personalizada - variables mías
-					contextoStep.put("registrosLeidos", registrosLeidos);
-					contextoStep.put("registrosCorrectos", registrosCorrectos);
-					contextoStep.put("registrosIncorrectos", registrosIncorrectos);
+					// Guardamos los contadores
+					stepContext.putInt("registrosLeidos", registrosLeidos);
+					stepContext.putInt("registrosCorrectos", registrosCorrectos);
+					stepContext.putInt("registrosIncorrectos", registrosIncorrectos);
 
-					// igualmente, puedo actualizar propiedades /valores que están predefinidos
-					// dentro del contexto
 					contribution.incrementWriteCount(registrosCorrectos);
 					contribution.incrementFilterCount(registrosIncorrectos);
+					
+					System.out.println("Mapa clientes " + mapaLocalidadClientes);
+					
+					String localidadMasClientes = mapaLocalidadClientes.entrySet()
+					        .stream()
+					        .max(Comparator.comparingInt(
+					                entrada -> entrada.getValue().size()
+					        ))
+					        .map(Map.Entry::getKey)
+					        .orElse("NINGUNA");
+					
+					System.out.println("Localidad con más clientes: "
+					        + localidadMasClientes);
+					
+					String localidadMasLarga = mapaLocalidadClientes.keySet()
+					        .stream()
+					        .max(Comparator.comparingInt(String::length))
+					        .orElse("NINGUNA");
+					
+					System.out.println("Localidad con nombre más largo: "
+					        + localidadMasLarga);
 
+					int numeroLocalidades = mapaLocalidadClientes.size();
+
+					System.out.println("Localidades distintas: " + numeroLocalidades);
+					
 					return RepeatStatus.FINISHED;
-				}, transactionManager).listener(listenerStep)// estoy asociando un listener a este step
-				.build();
+				}, transactionManager).listener(listenerInfoStep).build();
 
 		return pasoProcesarFichero;
 	}
 
 	@Bean
 	public Step crearDirectorioSalida(JobRepository jobRepository, PlatformTransactionManager transactionManager,
-			StepExecutionListener listenerStep) {
+			StepExecutionListener listenerInfoStep) {
 		Step pasoCrearDirectorioSalida = null;
 
 		pasoCrearDirectorioSalida = new StepBuilder("crearDirectorioSalida", jobRepository)
@@ -174,14 +221,14 @@ public class ConfigStepsCSV {
 
 					System.out.println("Directorios de trabajo listos");
 					return RepeatStatus.FINISHED;
-				}, transactionManager).listener(listenerStep).build();
+				}, transactionManager).listener(listenerInfoStep).build();
 
 		return pasoCrearDirectorioSalida;
 	}
 
 	@Bean
 	public Step comprobarFichero(JobRepository jobRepository, PlatformTransactionManager transactionManager,
-			StepExecutionListener listenerStep) {
+			StepExecutionListener listenerInfoStep) {
 		Step stepComprobarFichero = null;
 
 		stepComprobarFichero = new StepBuilder("comprobarFichero", jobRepository)
@@ -198,9 +245,10 @@ public class ConfigStepsCSV {
 					}
 
 					return RepeatStatus.FINISHED;
-				}, transactionManager).listener(listenerStep).build();
+				}, transactionManager).listener(listenerInfoStep).build();
 
 		return stepComprobarFichero;
 	}
+
 
 }

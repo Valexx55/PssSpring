@@ -1,0 +1,105 @@
+
+CREATE TABLE clientes_origen (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(150),
+    ciudad VARCHAR(100)
+);
+
+CREATE TABLE clientes_procesados (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(150),
+    ciudad VARCHAR(100),
+    activo BOOLEAN NOT NULL
+);
+
+INSERT INTO clientes_origen VALUES
+(1, 'Ana García', 'ANA@GMAIL.COM', 'Madrid'),
+(2, 'Pedro López', 'PEDRO@GMAIL.COM', 'Toledo'),
+(3, 'María Ruiz', 'MARIA@GMAIL.COM', 'Madrid'),
+(4, 'Luis Martín', 'LUIS@GMAIL.COM', 'Sevilla'),
+(5, 'Elena Pérez', 'ELENA@GMAIL.COM', 'Valencia');
+
+USE bd_spring_batch;
+
+SELECT
+    je.JOB_EXECUTION_ID AS ejecucion,
+    ji.JOB_NAME AS trabajo,
+    je.START_TIME AS inicio,
+    je.END_TIME AS fin,
+    je.STATUS AS estado,
+    TIMESTAMPDIFF(
+        SECOND,
+        je.START_TIME,
+        je.END_TIME
+    ) AS duracion_segundos
+FROM BATCH_JOB_EXECUTION je
+JOIN BATCH_JOB_INSTANCE ji
+    ON je.JOB_INSTANCE_ID = ji.JOB_INSTANCE_ID
+WHERE ji.JOB_NAME = 'jobGestionClientesSQL'
+ORDER BY je.START_TIME DESC
+LIMIT 20;
+
+
+
+SELECT * FROM bd_srping_batch.clientes_procesados;
+
+SELECT
+    STEP_EXECUTION_ID,
+    STEP_NAME,
+    STATUS,
+    READ_COUNT,
+    WRITE_COUNT,
+    FILTER_COUNT,
+    COMMIT_COUNT,
+    ROLLBACK_COUNT
+FROM BATCH_STEP_EXECUTION
+ORDER BY STEP_EXECUTION_ID DESC;
+
+
+USE bd_spring_batch;
+
+INSERT INTO clientes_origen (id, nombre, email, ciudad) VALUES
+(6,  'Carlos Sánchez', 'CARLOS@GMAIL.COM', 'Madrid'),
+(7,  'Lucía Fernández', 'LUCIA@GMAIL.COM', 'Barcelona'),
+(8,  'Javier Moreno', 'JAVIER@GMAIL.COM', 'Valencia'),
+(9,  'Sofía Romero', 'SOFIA@GMAIL.COM', 'Sevilla'),
+(10, 'Daniel Navarro', 'DANIEL@GMAIL.COM', 'Bilbao'),
+(11, 'Paula Torres', 'PAULA@GMAIL.COM', 'Madrid'),
+(12, 'Miguel Ortega', 'MIGUEL@GMAIL.COM', 'Toledo'),
+(13, 'Laura Castillo', 'LAURA@GMAIL.COM', 'Zaragoza'),
+(14, 'David Molina', 'DAVID@GMAIL.COM', 'Granada'),
+(15, 'Elena Ramos', 'ELENA@GMAIL.COM', 'Málaga'),
+(16, 'Alberto Vega', 'ALBERTO@GMAIL.COM', 'Madrid'),
+(17, 'Claudia Ruiz', 'CLAUDIA@GMAIL.COM', 'Salamanca'),
+(18, 'Pablo Serrano', 'PABLO@GMAIL.COM', 'Valladolid'),
+(19, 'Andrea Gil', 'ANDREA@GMAIL.COM', 'Valencia'),
+(20, 'Rubén Castro', 'RUBEN@GMAIL.COM', 'Córdoba'),
+(21, 'Natalia Prieto', 'NATALIA@GMAIL.COM', 'Barcelona'),
+(22, 'Óscar León', 'OSCAR@GMAIL.COM', 'Sevilla'),
+(23, 'Cristina Vidal', 'CRISTINA@GMAIL.COM', 'Madrid'),
+(24, 'Álvaro Núñez', 'ALVARO@GMAIL.COM', 'Alicante'),
+(25, 'Marta Herrera', 'MARTA@GMAIL.COM', 'Toledo'),
+(26, 'Sergio Medina', 'SERGIO@GMAIL.COM', 'Murcia'),
+(27, 'Beatriz Flores', 'BEATRIZ@GMAIL.COM', 'Burgos'),
+(28, 'Iván Santos', 'IVAN@GMAIL.COM', 'Madrid'),
+(29, 'Patricia Cruz', 'PATRICIA@GMAIL.COM', 'Cádiz'),
+(30, 'Hugo Martín', 'HUGO@GMAIL.COM', 'León');
+
+
+SELECT COUNT(*) AS total_procesados
+FROM clientes_procesados;
+
+SELECT
+    STEP_NAME,
+    STATUS,
+    READ_COUNT,
+    WRITE_COUNT,
+    COMMIT_COUNT,
+    ROLLBACK_COUNT
+FROM BATCH_STEP_EXECUTION
+WHERE STEP_NAME = 'procesarClientesSQL'
+ORDER BY STEP_EXECUTION_ID DESC
+LIMIT 1;
+

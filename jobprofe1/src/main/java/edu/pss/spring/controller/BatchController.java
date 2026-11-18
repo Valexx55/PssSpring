@@ -1,69 +1,101 @@
+
 package edu.pss.spring.controller;
 
 import org.springframework.batch.core.job.JobExecution;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import edu.pss.spring.model.ResultadoBatch;
 import edu.pss.spring.service.BatchService;
+import edu.pss.spring.service.ProcesadorBatch;
 
-/**
- * ESTA CLASE SE DEDICA A RECEBIR PETICIONES HTTP Y CONTESTARLAS
- */
 @RestController
 @RequestMapping("/api/batch")
 public class BatchController {
 
-	BatchService batchService;
-	
-	
-	public BatchController(BatchService batchService) {
-		this.batchService = batchService;
-	}
+    private final BatchService batchService;
+    private final ProcesadorBatch procesador;
 
+    // Inyección por constructor
+    public BatchController(BatchService batchService, 
+ //   		@Qualifier("procesadorCSV") ProcesadorBatch procesadorBatch ) {
+    	//@Qualifier("procesadorMySQL") ProcesadorBatch procesadorBatch ) {
+    	 ProcesadorBatch procesadorBatch ) {
+        this.batchService = batchService;
+        this.procesador = procesadorBatch;
+    }
+    
+    @PostMapping("/ejecutar-sql")
+    public ResultadoBatch ejecutarSQL() throws Exception {
 
+        JobExecution ejecucion = batchService.ejecutarSQL();
 
-	//le decimos a SPRING
-	//si recibimos una petición 
-	//POST http://localhost:8080/api/batch/ejecutar-csv
-	//es aquí!
-	@PostMapping("/ejecutar-csv")
-	public ResultadoBatch ejecutarBatchCSV () throws Exception
-	{
-		 JobExecution jobExecution = this.batchService.ejecutarFicheroBatchCSV();
-		 
-		 return new ResultadoBatch (
-				 jobExecution.getId(),
-				 jobExecution.getStatus().toString()
-				 );
-	}
-	
-	
-	@PostMapping("/ejecutar-sql")
-	public ResultadoBatch ejecutarBatchMySQL () throws Exception
-	{
-		 JobExecution jobExecution = this.batchService.ejecutarJobBatchMySQL();
-		 
-		 return new ResultadoBatch (
-				 jobExecution.getId(),
-				 jobExecution.getStatus().toString()
-				 );
-	}
-	
-	
-	//TODO controlar el caso de que el trabajo consultado no existe
-	@GetMapping("/consultas-pasadas/{id}")
-	public ResultadoBatch ejecutarConsultasPasadas (@PathVariable Long id) throws Exception
-	{
-		 //JobExecution jobExecution = this.batchService.ejecucionConsulta(2);
-		 JobExecution jobExecution = this.batchService.ejecucionConsulta(id);
-		 return new ResultadoBatch (
-				 jobExecution.getId(),
-				 jobExecution.getStatus().toString()
-				 );
-	}
-	
+        return new ResultadoBatch(
+                ejecucion.getId(),
+                ejecucion.getStatus().toString()
+        );
+    }
+
+    @PostMapping("/ejecutar-csv")
+    public ResultadoBatch ejecutar() throws Exception {
+
+        JobExecution ejecucion = batchService.ejecutarFichero();
+
+        return new ResultadoBatch(
+                ejecucion.getId(),
+                ejecucion.getStatus().toString()
+        );
+    }
+    
+    @GetMapping("/ejecuciones/{id}")
+    public ResponseEntity<ResultadoBatch> consultar(
+            @PathVariable Long id) {
+
+        JobExecution ejecucion =
+                batchService.consultarEjecucion(id);
+
+        if (ejecucion == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(
+                new ResultadoBatch(
+                        ejecucion.getId(),
+                        ejecucion.getStatus().toString()
+                )
+        );
+    }
+
+    @PostMapping("/ejecutar-di")
+    public ResultadoBatch ejecutarConInyeccion() throws Exception {
+
+        JobExecution ejecucion = procesador.ejecutar();
+
+        return new ResultadoBatch(
+                ejecucion.getId(),
+                ejecucion.getStatus().toString()
+        );
+    }
+    
+    public record ResultadoBatch(
+            Long idEjecucion,
+            String estado
+    ) {}
+    
+    
+    @PostMapping("/reiniciar/{id}")
+    public ResultadoBatch reiniciar(
+            @PathVariable("id") Long id) throws Exception {
+
+        JobExecution ejecucion = batchService.reiniciarEjecucion(id);
+
+        return new ResultadoBatch(
+                ejecucion.getId(),
+                ejecucion.getStatus().toString()
+        );
+    }
 }

@@ -12,20 +12,16 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ConfigJobMySQL {
 
-	@Bean
-	public Job jobGestionClientesSQL(
-			JobRepository jobRepository,
-			@Qualifier("procesarClientesSQL") Step procesarClientesSQL,
-			@Qualifier("listenerJob") JobExecutionListener listenerJob)
-	{
-		Job trabajoMySQL = null;
-		
-			trabajoMySQL = new JobBuilder("jobGestionClientesSQL", jobRepository)
-					.start(procesarClientesSQL)
-					.listener(listenerJob)
-					//.listener(listenerChunks)
-					.build();
-		
-		return trabajoMySQL;
-	}
+    @Bean
+    public Job jobGestionClientesSQL(
+            JobRepository jobRepository,
+            @Qualifier("procesarClientesSQL") Step procesarClientesSQL,
+            @Qualifier("listenerInfoJob")
+            JobExecutionListener listenerInfoJob) {
+
+        return new JobBuilder("jobGestionClientesSQL", jobRepository)
+                .start(procesarClientesSQL)
+                .listener(listenerInfoJob)
+                .build();
+    }
 }
